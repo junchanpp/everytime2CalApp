@@ -96,7 +96,7 @@ class _ProcessPageState extends State<ProcessPage> {
                 child: const Text("확인"))
           ],
         );
-      }
+      });
     } catch(e) {
       if(!context.mounted) return;
 
