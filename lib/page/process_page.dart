@@ -5,6 +5,8 @@ import 'package:flutter_naver_login/flutter_naver_login.dart';
 import 'package:http/http.dart' as http;
 
 import '../Component/common_text_style.dart';
+import '../Component/date_time_picker.dart';
+import '../component/introduction_container.dart';
 
 class ProcessPage extends StatefulWidget {
   final String everyTimeUrl;
@@ -48,7 +50,7 @@ class _ProcessPageState extends State<ProcessPage> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 inputKeyContainer(),
-                introductionContainer(),
+                IntroductionContainer.introductionContainer(),
               ],
             )),
             if (isLoading)
@@ -71,21 +73,53 @@ class _ProcessPageState extends State<ProcessPage> {
   }
 
   onPressed() async {
+
     setState(() {
       isLoading = true;
     });
 
-    // await Future.delayed(const Duration(seconds: 3));
+    try{
+      String icalString = await getIcsFromEveryTime();
+
+      var result = await syncronizeWithNaverCalendar(icalString);
+    } catch(e) {
+      if(!context.mounted) return;
+
+      showDialog(context: context, builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("에러"),
+          content: const Text("에브리 타임 id가 존재하지 않거나, 비공개인 시간표입니다."),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("확인"))
+          ],
+        );
+      });
+    }
+
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<String> getIcsFromEveryTime() async {
     const String everyTimeParseUrl =
         "https://hp19ylqy1a.execute-api.ap-northeast-2.amazonaws.com/default/getIcsFromEveryTime";
-    //everyTimeParseUrl, @이후 파싱
-    // final String everyTimeKey = widget.everyTimeUrl.split("@")[1];
-    // final String everyTimeUrl = "$everyTimeParseUrl?id=$everyTimeKey&begin=${widget.beginDate}&end=${widget.endDate}";
-    const String everyTimeUrl =
-        "https://hp19ylqy1a.execute-api.ap-northeast-2.amazonaws.com/default/getIcsFromEveryTime?id=9iYT60bfIV9KxKWLzUL4&begin=2023-10-01&end=2023-10-30";
+    final String everyTimeKey = widget.everyTimeUrl.split("@")[1];
+    final String everyTimeUrl = "$everyTimeParseUrl?id=$everyTimeKey&begin=$beginDate&end=$endDate";
+
     final everyTimeResult = await http.get(Uri.parse(everyTimeUrl),
         headers: {"Content-Type": "application/json;charset=UTF-8"});
-    String icalString = utf8.decode(everyTimeResult.bodyBytes);
+    return utf8.decode(everyTimeResult.bodyBytes);
+
+  }
+
+
+  Future<bool> syncronizeWithNaverCalendar(String icalString) async {
 
     final NaverLoginResult _result = await FlutterNaverLogin.logIn();
     NaverAccessToken res = await FlutterNaverLogin.currentAccessToken;
@@ -114,9 +148,7 @@ END:VCALENDAR
 
       await http.post(Uri.parse(url), headers: headers, body: body);
     }
-    setState(() {
-      isLoading = false;
-    });
+    return true;
   }
 
   List<String> extractVEventBlocks(String icalString) {
@@ -182,80 +214,18 @@ END:VCALENDAR
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 0,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: TextButton(
-                              onPressed: () async {
-                                final DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: beginDate == ""
-                                      ? DateTime.now()
-                                      : DateTime.parse(beginDate),
-                                  firstDate: DateTime(2015, 8),
-                                  lastDate: DateTime(2101),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    beginDate = parseDateToStr(picked);
-                                  });
-                                }
-                              },
-                              child: Text(
-                                beginDate == "" ? '개강 날짜' : beginDate,
-                                style: CommonTextStyle.defaultTextStyle(),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 0,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: TextButton(
-                              onPressed: () async {
-                                final DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: endDate == ""
-                                      ? DateTime.now()
-                                      : DateTime.parse(endDate),
-                                  firstDate: DateTime(2015, 8),
-                                  lastDate: DateTime(2101),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    endDate = parseDateToStr(picked);
-                                  });
-                                }
-                              },
-                              child: Text(
-                                endDate == "" ? '종강 날짜' : endDate,
-                                style: CommonTextStyle.defaultTextStyle(),
-                              ),
-                            ),
-                          )
+                          DateTimePicker.datePicker(
+                              context, beginDate, '개강 날짜', (String date) {
+                            setState(() {
+                              beginDate = date;
+                            });
+                          }),
+                          DateTimePicker.datePicker(
+                              context, endDate, '종강 날짜', (String date) {
+                            setState(() {
+                              endDate = date;
+                            });
+                          }),
                         ],
                       )),
                 ),
@@ -270,7 +240,7 @@ END:VCALENDAR
                   child: TextButton(
                     onPressed: onPressed,
                     child: Text(
-                      '시간표 가져오기',
+                      '네이버 캘린더에 추가하기',
                       style: CommonTextStyle.defaultBoldTextStyle(),
                     ),
                   ),
@@ -283,85 +253,4 @@ END:VCALENDAR
     );
   }
 
-  Widget introductionContainer() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0E1DD),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 0,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.only(top: 10),
-                  width: double.infinity,
-                  height: 30,
-                  alignment: Alignment.center,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.9,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '사용법',
-                      style: CommonTextStyle.defaultBoldTextStyle(),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(top: 10, bottom: 10),
-                  alignment: Alignment.center,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.9,
-                    child: Text(
-                      '1. everyTime -> 시간표 -> 설정 버튼 -> URL 공유하기를 누릅니다.\n이때, 공개 범위는 "전체 공개"로 설정합니다.',
-                      style: CommonTextStyle.defaultTextStyle(),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(top: 10, bottom: 10),
-                  alignment: Alignment.center,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.9,
-                    child: Text(
-                      '2. 공유받은 url을 위의 필드에 넣고, 시간표 가져오기를 누릅니다.',
-                      style: CommonTextStyle.defaultTextStyle(),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(top: 10, bottom: 10),
-                  alignment: Alignment.center,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.9,
-                    child: Text(
-                      '3. 개강날짜와 종강 날짜를 선택한 후, 적용하기를 누릅니다.',
-                      style: CommonTextStyle.defaultTextStyle(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
