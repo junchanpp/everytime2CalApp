@@ -82,6 +82,21 @@ class _ProcessPageState extends State<ProcessPage> {
       String icalString = await getIcsFromEveryTime();
 
       var result = await syncronizeWithNaverCalendar(icalString);
+
+      if(!context.mounted) return;
+      showDialog(context: context, builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("성공"),
+          content: const Text("네이버 캘린더에 성공적으로 추가되었습니다."),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("확인"))
+          ],
+        );
+      }
     } catch(e) {
       if(!context.mounted) return;
 
