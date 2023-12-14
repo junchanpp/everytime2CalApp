@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
               ],
             );
           });
-      // return;
+      return;
     }
 
     //processPage 클래스로 이동 및 이동할 때 everyTimeUrl 전달
