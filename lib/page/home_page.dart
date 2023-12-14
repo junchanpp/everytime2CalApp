@@ -20,10 +20,32 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  onSubmitted(){
-    //processPage 클래스로 이동 및 이동할 때 everyTimeUrl 전달
-    Navigator.push(context, MaterialPageRoute(builder: (context) => ProcessPage(everyTimeUrl: everyTimeUrl)));
+  onSubmitted() {
+    RegExp regExp = RegExp(r"^https:\/\/everytime\.kr\/@.*$");
+    if (regExp.hasMatch(everyTimeUrl) == false) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("에러"),
+              content: const Text("everyTime url을 넣어주세요."),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("확인"))
+              ],
+            );
+          });
+      // return;
+    }
 
+    //processPage 클래스로 이동 및 이동할 때 everyTimeUrl 전달
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ProcessPage(everyTimeUrl: everyTimeUrl)));
   }
 
   @override
@@ -43,16 +65,15 @@ class _HomePageState extends State<HomePage> {
         top: true,
         child: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                inputKeyContainer(),
-                introductionContainer(),
-              ],
-            )),
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            inputKeyContainer(),
+            introductionContainer(),
+          ],
+        )),
       ),
     );
   }
-
 
   //------------------------Widget------------------------
   Widget inputKeyContainer() {
@@ -100,9 +121,7 @@ class _HomePageState extends State<HomePage> {
                   child: FractionallySizedBox(
                     widthFactor: 0.9,
                     child: TextField(
-                      onChanged: (String url) {
-                        onChanged(url);
-                      },
+                      onChanged: onChanged,
                       obscureText: false,
                       decoration: CommonTextField.defaultTextFieldDecoration(
                           "https://everytime.kr/@.."),
@@ -133,7 +152,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget introductionContainer(){
+  Widget introductionContainer() {
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -190,7 +209,7 @@ class _HomePageState extends State<HomePage> {
                   child: FractionallySizedBox(
                     widthFactor: 0.9,
                     child: Text(
-                      '2. 시간표 가져오기를 누릅니다.',
+                      '2. 공유받은 url을 위의 필드에 넣고, 시간표 가져오기를 누릅니다.',
                       style: CommonTextStyle.defaultTextStyle(),
                     ),
                   ),

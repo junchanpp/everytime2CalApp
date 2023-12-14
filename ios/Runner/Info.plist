@@ -47,5 +47,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>naverConsumerKey</key>
+    <string>CikPtvXeI_A_NOh4yln1</string>
+    <key>naverConsumerSecret</key>
+    <string>SAay45bdF3</string>
+    <key>naverServiceAppName</key>
+    <string>everyTime2Cal</string>
+    <key>naverServiceAppUrlScheme</key>
+    <string>naver</string>
 </dict>
 </plist>
