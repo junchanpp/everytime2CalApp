@@ -13,7 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late String everyTimeUrl;
+  String everyTimeUrl="";
 
   onChanged(String url) {
     setState(() {
@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   onSubmitted() {
     RegExp regExp = RegExp(r"^https:\/\/everytime\.kr\/@.*$");
     if (regExp.hasMatch(everyTimeUrl) == false) {
+
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -41,8 +42,6 @@ class _HomePageState extends State<HomePage> {
           });
       return;
     }
-
-    //processPage 클래스로 이동 및 이동할 때 everyTimeUrl 전달
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -117,11 +116,12 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.only(top: 10, bottom: 10),
-                  height: 40,
+                  height: 70,
                   alignment: Alignment.center,
                   child: FractionallySizedBox(
                     widthFactor: 0.9,
                     child: TextField(
+                      maxLines: 1,
                       onChanged: onChanged,
                       obscureText: false,
                       decoration: CommonTextField.defaultTextFieldDecoration(

@@ -6,7 +6,7 @@ class CommonTextField {
       hintText: labelText,
       hintStyle: const TextStyle(
         color: Colors.grey,
-        fontSize: 12.0,
+        fontSize: 10.0,
       ),
       enabledBorder: const UnderlineInputBorder(
         borderSide: BorderSide(

@@ -79,7 +79,10 @@ class _ProcessPageState extends State<ProcessPage> {
     });
 
     try{
+      if(beginDate == "" || endDate == "") throw Exception("개강 날짜와 종강 날짜를 모두 입력해주세요.");
+
       String icalString = await getIcsFromEveryTime();
+      if(!icalString.contains("BEGIN:VEVENT")) throw Exception("에브리타임 id가 존재하지 않거나, 비공개인 시간표입니다.");
 
       var result = await syncronizeWithNaverCalendar(icalString);
 
@@ -97,13 +100,18 @@ class _ProcessPageState extends State<ProcessPage> {
           ],
         );
       });
-    } catch(e) {
+    } catch (e) {
+
+      setState(() {
+        isLoading = false;
+      });
       if(!context.mounted) return;
 
       showDialog(context: context, builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("에러"),
-          content: const Text("에브리 타임 id가 존재하지 않거나, 비공개인 시간표입니다."),
+          //error message from exception
+          content: Text(e.toString()),
           actions: [
             TextButton(
                 onPressed: () {
@@ -113,12 +121,13 @@ class _ProcessPageState extends State<ProcessPage> {
           ],
         );
       });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
 
 
-    setState(() {
-      isLoading = false;
-    });
   }
 
   Future<String> getIcsFromEveryTime() async {
@@ -127,8 +136,7 @@ class _ProcessPageState extends State<ProcessPage> {
     final String everyTimeKey = widget.everyTimeUrl.split("@")[1];
     final String everyTimeUrl = "$everyTimeParseUrl?id=$everyTimeKey&begin=$beginDate&end=$endDate";
 
-    final everyTimeResult = await http.get(Uri.parse(everyTimeUrl),
-        headers: {"Content-Type": "application/json;charset=UTF-8"});
+    final everyTimeResult = await http.get(Uri.parse(everyTimeUrl));
     return utf8.decode(everyTimeResult.bodyBytes);
 
   }
@@ -147,6 +155,7 @@ class _ProcessPageState extends State<ProcessPage> {
     };
 
     List<String> vEventBlocks = extractVEventBlocks(icalString);
+    print(vEventBlocks);
 
     for (var vEvent in vEventBlocks) {
       var scheduleIcalString = '''
@@ -161,7 +170,8 @@ END:VCALENDAR
         "scheduleIcalString": scheduleIcalString
       };
 
-      await http.post(Uri.parse(url), headers: headers, body: body);
+
+      print((await http.post(Uri.parse(url), headers: headers, body: body)).body);
     }
     return true;
   }

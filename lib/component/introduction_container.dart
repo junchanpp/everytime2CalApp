@@ -73,7 +73,7 @@ class IntroductionContainer{
                   child: FractionallySizedBox(
                     widthFactor: 0.9,
                     child: Text(
-                      '3. 개강날짜와 종강 날짜를 선택한 후, 적용하기를 누릅니다.',
+                      '3. 개강날짜와 종강 날짜를 선택한 후, 네이버 캘린더에 추가하기를 누릅니다.',
                       style: CommonTextStyle.defaultTextStyle(),
                     ),
                   ),
